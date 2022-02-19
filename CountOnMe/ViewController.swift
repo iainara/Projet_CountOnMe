@@ -26,9 +26,14 @@ class ViewController: UIViewController {
     }
     
     var canAddOperator: Bool {
-        return elements.last != "+" && elements.last != "-"
+        return elements.last != "+" && elements.last != "-" && elements.last != "/" && elements.last != "X"
+        
     }
     
+    var canAddComma: Bool {
+        return !elements.last!.contains(".")
+    }
+
     var expressionHaveResult: Bool {
         return textView.text.firstIndex(of: "=") != nil
     }
@@ -42,15 +47,18 @@ class ViewController: UIViewController {
     
     // View actions
     @IBAction func tappedNumberButton(_ sender: UIButton) {
-        guard let numberText = sender.title(for: .normal) else {
+        guard let numberText = sender.title(for: .normal)else {
             return
         }
         
         if expressionHaveResult {
             textView.text = ""
         }
-        
         textView.text.append(numberText)
+    }
+    
+    @IBAction func tappedACButton(_ sender: UIButton) {
+            textView.text = ""
     }
     
     @IBAction func tappedAdditionButton(_ sender: UIButton) {
@@ -63,6 +71,16 @@ class ViewController: UIViewController {
         }
     }
     
+    @IBAction func tappedCommaButton(_ sender: UIButton) {
+        if canAddComma {
+            textView.text.append(".")
+        }
+        else {
+            let alertVC = UIAlertController(title: "Zéro!", message: "Une virgule est déja mise !", preferredStyle: .alert)
+            alertVC.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+            self.present(alertVC, animated: true, completion: nil)
+        }
+    }
     @IBAction func tappedSubstractionButton(_ sender: UIButton) {
         if canAddOperator {
             textView.text.append(" - ")
@@ -73,6 +91,26 @@ class ViewController: UIViewController {
         }
     }
 
+    @IBAction func tappedDivisionButton(_ sender: UIButton) {
+        if canAddOperator {
+            textView.text.append(" / ")
+        } else {
+            let alertVC = UIAlertController(title: "Zéro!", message: "Un operateur est déja mis !", preferredStyle: .alert)
+            alertVC.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+            self.present(alertVC, animated: true, completion: nil)
+        }
+    }
+    
+    @IBAction func tappedMultiplicationButton(_ sender: UIButton) {
+        if canAddOperator {
+            textView.text.append(" x ")
+        } else {
+            let alertVC = UIAlertController(title: "Zéro!", message: "Un operateur est déja mis !", preferredStyle: .alert)
+            alertVC.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+            self.present(alertVC, animated: true, completion: nil)
+        }
+    }
+    
     @IBAction func tappedEqualButton(_ sender: UIButton) {
         guard expressionIsCorrect else {
             let alertVC = UIAlertController(title: "Zéro!", message: "Entrez une expression correcte !", preferredStyle: .alert)
@@ -88,25 +126,45 @@ class ViewController: UIViewController {
         
         // Create local copy of operations
         var operationsToReduce = elements
-        
-        // Iterate over operations while an operand still here
-        while operationsToReduce.count > 1 {
-            let left = Int(operationsToReduce[0])!
-            let operand = operationsToReduce[1]
-            let right = Int(operationsToReduce[2])!
-            
-            let result: Int
-            switch operand {
-            case "+": result = left + right
-            case "-": result = left - right
-            default: fatalError("Unknown operator !")
-            }
-            
-            operationsToReduce = Array(operationsToReduce.dropFirst(3))
-            operationsToReduce.insert("\(result)", at: 0)
+        operationsToReduce = doOperation(operationsToReduce: &operationsToReduce,operand:"x")
+        operationsToReduce = doOperation(operationsToReduce: &operationsToReduce,operand:"/")
+        operationsToReduce = doOperation(operationsToReduce: &operationsToReduce,operand:"+")
+        operationsToReduce = doOperation(operationsToReduce: &operationsToReduce,operand:"-")
+        var result = Float(operationsToReduce.first!)!
+        var something = String(result)
+        if result - floor(result) == 0 {
+            something = String(Int(floor(result)))
         }
+        textView.text.append(" = \(something)")
+    }
+    func doOperation(operationsToReduce: inout [String],operand:String) -> [String]{
+        var havex = true 
+        while havex{
+            havex = false
+            for index in 0...operationsToReduce.count-1{
+                if operationsToReduce[index] == operand {
+                    let left = Float(operationsToReduce[index-1])!
+                    let right = Float(operationsToReduce[index+1])!
+                    let result: Float
+                    switch operand {
+                    case "+": result = left + right
+                    case "-": result = left - right
+                    case "x": result = left * right
+                    case "/": result = left / right
+                    default: fatalError("Unknown operator !")
+                    }
+                    operationsToReduce.remove(at: index+1)
+                    operationsToReduce.remove(at: index)
+                    operationsToReduce[index -1]="\(result)"
+                    havex = true
+                    break
+                }
+            }
+        }
+
+            return operationsToReduce
+
         
-        textView.text.append(" = \(operationsToReduce.first!)")
     }
 
 }
