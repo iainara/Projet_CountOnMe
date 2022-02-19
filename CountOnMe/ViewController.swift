@@ -31,7 +31,7 @@ class ViewController: UIViewController {
     }
     
     var canAddComma: Bool {
-        return !elements.last!.contains(".")
+        return elements.count == 0 || !elements.last!.contains(".")
     }
 
     var expressionHaveResult: Bool {
@@ -50,21 +50,31 @@ class ViewController: UIViewController {
         guard let numberText = sender.title(for: .normal)else {
             return
         }
-        
-        if expressionHaveResult {
-            textView.text = ""
-        }
-        textView.text.append(numberText)
+        addDigit(digit: numberText)
     }
     
     @IBAction func tappedACButton(_ sender: UIButton) {
             textView.text = ""
     }
+    func addOperand(operand: String){
+        if expressionHaveResult {
+            var last = textView.text.split(separator: "=").map { "\($0)" }
+            textView.text = last.last  
+          }
+        textView.text.append(operand)
+    }
+    func addDigit(digit: String){
+        if expressionHaveResult {
+                textView.text = ""
+        }
+        textView.text.append(digit)
+    }
     
     @IBAction func tappedAdditionButton(_ sender: UIButton) {
         if canAddOperator {
-            textView.text.append(" + ")
-        } else {
+            addOperand(operand: " + ")
+        }
+         else {
             let alertVC = UIAlertController(title: "Zéro!", message: "Un operateur est déja mis !", preferredStyle: .alert)
             alertVC.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
             self.present(alertVC, animated: true, completion: nil)
@@ -73,7 +83,11 @@ class ViewController: UIViewController {
     
     @IBAction func tappedCommaButton(_ sender: UIButton) {
         if canAddComma {
-            textView.text.append(".")
+            if textView.text.last == " " || textView.text == "" || expressionHaveResult{
+                addDigit(digit: "0.")
+            }else{
+                addDigit(digit: ".")
+            }
         }
         else {
             let alertVC = UIAlertController(title: "Zéro!", message: "Une virgule est déja mise !", preferredStyle: .alert)
@@ -83,7 +97,7 @@ class ViewController: UIViewController {
     }
     @IBAction func tappedSubstractionButton(_ sender: UIButton) {
         if canAddOperator {
-            textView.text.append(" - ")
+            addOperand(operand: " - ")
         } else {
             let alertVC = UIAlertController(title: "Zéro!", message: "Un operateur est déja mis !", preferredStyle: .alert)
             alertVC.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
@@ -93,7 +107,7 @@ class ViewController: UIViewController {
 
     @IBAction func tappedDivisionButton(_ sender: UIButton) {
         if canAddOperator {
-            textView.text.append(" / ")
+            addOperand(operand: " / ")
         } else {
             let alertVC = UIAlertController(title: "Zéro!", message: "Un operateur est déja mis !", preferredStyle: .alert)
             alertVC.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
@@ -103,7 +117,7 @@ class ViewController: UIViewController {
     
     @IBAction func tappedMultiplicationButton(_ sender: UIButton) {
         if canAddOperator {
-            textView.text.append(" x ")
+            addOperand(operand: " x ")
         } else {
             let alertVC = UIAlertController(title: "Zéro!", message: "Un operateur est déja mis !", preferredStyle: .alert)
             alertVC.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
@@ -123,6 +137,9 @@ class ViewController: UIViewController {
             alertVC.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
             return self.present(alertVC, animated: true, completion: nil)
         }
+        if expressionHaveResult{
+            return 
+        }
         
         // Create local copy of operations
         var operationsToReduce = elements
@@ -130,7 +147,7 @@ class ViewController: UIViewController {
         operationsToReduce = doOperation(operationsToReduce: &operationsToReduce,operand:"/")
         operationsToReduce = doOperation(operationsToReduce: &operationsToReduce,operand:"+")
         operationsToReduce = doOperation(operationsToReduce: &operationsToReduce,operand:"-")
-        var result = Float(operationsToReduce.first!)!
+        var result = Double(operationsToReduce.first!)!
         var something = String(result)
         if result - floor(result) == 0 {
             something = String(Int(floor(result)))
@@ -143,9 +160,9 @@ class ViewController: UIViewController {
             havex = false
             for index in 0...operationsToReduce.count-1{
                 if operationsToReduce[index] == operand {
-                    let left = Float(operationsToReduce[index-1])!
-                    let right = Float(operationsToReduce[index+1])!
-                    let result: Float
+                    let left = Double(operationsToReduce[index-1])!
+                    let right = Double(operationsToReduce[index+1])!
+                    let result: Double
                     switch operand {
                     case "+": result = left + right
                     case "-": result = left - right
@@ -155,7 +172,7 @@ class ViewController: UIViewController {
                     }
                     operationsToReduce.remove(at: index+1)
                     operationsToReduce.remove(at: index)
-                    operationsToReduce[index -1]="\(result)"
+                    operationsToReduce[index-1]="\(result)"
                     havex = true
                     break
                 }
